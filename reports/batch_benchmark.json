@@ -1,0 +1,98 @@
+[
+  {
+    "records": 42561,
+    "chunksize": 10000,
+    "scorer": "pipeline",
+    "wall_s": 2.64,
+    "rps_end_to_end": 16121.9,
+    "rps_scoring_only": 106509.5
+  },
+  {
+    "records": 42561,
+    "chunksize": 10000,
+    "scorer": "compiled",
+    "wall_s": 0.835,
+    "rps_end_to_end": 50993.6,
+    "rps_scoring_only": 220320.2
+  },
+  {
+    "records": 42561,
+    "chunksize": 100000,
+    "scorer": "pipeline",
+    "wall_s": 0.788,
+    "rps_end_to_end": 53985.2,
+    "rps_scoring_only": 121601.8
+  },
+  {
+    "records": 42561,
+    "chunksize": 100000,
+    "scorer": "compiled",
+    "wall_s": 0.642,
+    "rps_end_to_end": 66281.9,
+    "rps_scoring_only": 226839.4
+  },
+  {
+    "records": 250000,
+    "chunksize": 10000,
+    "scorer": "pipeline",
+    "wall_s": 4.465,
+    "rps_end_to_end": 55992.2,
+    "rps_scoring_only": 119101.2
+  },
+  {
+    "records": 250000,
+    "chunksize": 10000,
+    "scorer": "compiled",
+    "wall_s": 4.276,
+    "rps_end_to_end": 58465.0,
+    "rps_scoring_only": 247172.4
+  },
+  {
+    "records": 250000,
+    "chunksize": 100000,
+    "scorer": "pipeline",
+    "wall_s": 4.161,
+    "rps_end_to_end": 60077.4,
+    "rps_scoring_only": 120236.1
+  },
+  {
+    "records": 250000,
+    "chunksize": 100000,
+    "scorer": "compiled",
+    "wall_s": 2.882,
+    "rps_end_to_end": 86757.8,
+    "rps_scoring_only": 271530.0
+  },
+  {
+    "records": 1000000,
+    "chunksize": 10000,
+    "scorer": "pipeline",
+    "wall_s": 18.168,
+    "rps_end_to_end": 55040.4,
+    "rps_scoring_only": 116986.9
+  },
+  {
+    "records": 1000000,
+    "chunksize": 10000,
+    "scorer": "compiled",
+    "wall_s": 19.427,
+    "rps_end_to_end": 51476.0,
+    "rps_scoring_only": 216478.6
+  },
+  {
+    "records": 1000000,
+    "chunksize": 100000,
+    "scorer": "pipeline",
+    "wall_s": 17.828,
+    "rps_end_to_end": 56090.3,
+    "rps_scoring_only": 99519.8
+  },
+  {
+    "records": 1000000,
+    "chunksize": 100000,
+    "scorer": "compiled",
+    "wall_s": 13.471,
+    "rps_end_to_end": 74235.8,
+    "rps_scoring_only": 195035.0
+  }
+]

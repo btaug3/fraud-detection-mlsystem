@@ -1,0 +1,92 @@
+{
+  "label": "compiled",
+  "sequential_client": {
+    "n": 2000,
+    "mean": 3.143,
+    "p50": 3.01,
+    "p95": 4.076,
+    "p99": 5.024,
+    "max": 37.736
+  },
+  "sequential_server_handler": {
+    "n": 2000,
+    "mean": 0.42,
+    "p50": 0.349,
+    "p95": 0.596,
+    "p99": 0.927,
+    "max": 31.067
+  },
+  "concurrent": [
+    {
+      "n": 2000,
+      "mean": 20.114,
+      "p50": 19.144,
+      "p95": 27.65,
+      "p99": 34.367,
+      "max": 63.712,
+      "concurrency": 4,
+      "throughput_rps": 189.2,
+      "errors": 0
+    },
+    {
+      "n": 2000,
+      "mean": 148.582,
+      "p50": 124.343,
+      "p95": 336.263,
+      "p99": 478.388,
+      "max": 740.398,
+      "concurrency": 16,
+      "throughput_rps": 103.6,
+      "errors": 0
+    }
+  ],
+  "batch_endpoint": [
+    {
+      "n": 50,
+      "mean": 4.038,
+      "p50": 4.021,
+      "p95": 4.883,
+      "p99": 5.234,
+      "max": 5.309,
+      "batch_size": 10,
+      "records_per_s": 2486.9
+    },
+    {
+      "n": 50,
+      "mean": 13.251,
+      "p50": 13.166,
+      "p95": 14.727,
+      "p99": 16.777,
+      "max": 18.578,
+      "batch_size": 100,
+      "records_per_s": 7595.3
+    },
+    {
+      "n": 50,
+      "mean": 105.06,
+      "p50": 102.697,
+      "p95": 111.2,
+      "p99": 149.862,
+      "max": 172.2,
+      "batch_size": 1000,
+      "records_per_s": 9737.4
+    }
+  ],
+  "server_metrics": {
+    "uptime_s": 152.6,
+    "requests_by_status": {
+      "200": 6253
+    },
+    "error_rate_5xx": 0.0,
+    "latency_ms": {
+      "p50": 4.863,
+      "p95": 11.073,
+      "p99": 59.52
+    },
+    "records_by_tier": {
+      "primary_lightgbm": 62710
+    },
+    "records_scored": 62710,
+    "flag_rate": 0.00029
+  }
+}

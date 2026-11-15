@@ -127,3 +127,16 @@ def test_batch_cli_quarantines_bad_rows(tmp_path):
     assert s["records_rejected"] == 3 and s["records_scored"] == len(df) - 3
     out = pd.read_csv(tmp_path / "out.csv")
     assert out.fraud_probability.between(0, 1).all()
+
+
+# ------------------------------ 7. fast path == canonical pipeline ------------------------------
+def test_compiled_fast_path_matches_pipeline_on_real_data():
+    from fraud.serving.model_service import ModelService
+    svc = ModelService.load()
+    assert set(svc.fast) == {"primary", "secondary"}
+    df = pd.read_csv(C.DATA_SAMPLE / "unseen_transactions.csv", nrows=5000)[C.RAW_FEATURES]
+    df.iloc[::7, 3] = np.nan                       # inject missing values
+    R = df.to_numpy(float)
+    for key, art in (("primary", svc.primary), ("secondary", svc.secondary)):
+        ref = art["pipeline"].predict_proba(df)[:, 1]
+        assert np.max(np.abs(svc.fast[key].predict_proba(R) - ref)) < 1e-9
