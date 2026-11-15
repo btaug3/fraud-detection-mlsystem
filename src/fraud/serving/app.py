@@ -50,7 +50,7 @@ Transaction = create_model(
 
 class BatchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    transactions: list[Transaction] = Field(..., min_length=1, max_length=MAX_BATCH)
+    transactions: list[Transaction] = Field(..., min_length=1, max_length=MAX_BATCH)  # type: ignore
 
 
 class Prediction(BaseModel):
@@ -162,10 +162,10 @@ def health():
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(txn: Transaction):
+def predict(txn: Transaction):  # type: ignore
     t0 = time.perf_counter()
     preds = _score([txn])
-    return PredictResponse(predictions=preds, latency_ms=round((time.perf_counter() - t0) * 1000, 3))
+    return PredictResponse(predictions=preds, latency_ms=round((time.perf_counter() - t0) * 1000, 3)) 
 
 
 @app.post("/predict/batch", response_model=PredictResponse)
