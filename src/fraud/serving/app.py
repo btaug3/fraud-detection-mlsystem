@@ -3,70 +3,21 @@ Run:  uvicorn fraud.serving.app:app --port 8000
 """
 import json
 import logging
-import math
 import time
 from collections import Counter, deque
 from contextlib import asynccontextmanager
-from typing import Optional
 
 import numpy as np
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
 
 from ..config import PCA_COLS, RAW_FEATURES
 from .model_service import ModelService
+from .schemas import BatchRequest, Prediction, PredictResponse, Transaction
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger("fraud.api")
-
-MAX_BATCH = 1000
-MAX_AMOUNT = 1_000_000.0                 # sanity bound in EUR; above this = malformed
-MAX_TIME = 10 * 365 * 86400
-
-
-# ------------------------------ request / response schemas ------------------------------
-class _TxnBase(BaseModel):
-    model_config = ConfigDict(extra="forbid")      # unknown fields -> 422 (catches upstream schema drift)
-    transaction_id: str = Field(..., min_length=1, max_length=64)
-    Time: float = Field(..., ge=0, le=MAX_TIME, description="seconds since stream start")
-    Amount: float = Field(..., ge=0, le=MAX_AMOUNT)
-
-    @field_validator("*", mode="after")
-    @classmethod
-    def _finite(cls, v):
-        if isinstance(v, float) and not math.isfinite(v):
-            raise ValueError("must be a finite number")
-        return v
-
-
-# V1..V28 optional: a missing PCA value is imputed with the training median
-Transaction = create_model(
-    "Transaction", __base__=_TxnBase,
-    **{c: (Optional[float], Field(None, ge=-1e4, le=1e4)) for c in PCA_COLS},
-)
-
-
-class BatchRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    transactions: list[Transaction] = Field(..., min_length=1, max_length=MAX_BATCH)  # type: ignore
-
-
-class Prediction(BaseModel):
-    transaction_id: str
-    fraud_probability: float
-    is_fraud: bool
-    decision: str                     # BLOCK / REVIEW / APPROVE
-    threshold: float
-    served_by: str                    # which fallback tier produced the score
-    model_version: str
-    imputed_fields: list[str] = []
-
-
-class PredictResponse(BaseModel):
-    predictions: list[Prediction]
-    latency_ms: float
 
 
 # ------------------------------ in-process telemetry ------------------------------
@@ -100,7 +51,7 @@ async def lifespan(app: FastAPI):
     app.state.tel = Telemetry()
     svc = app.state.svc
     log.info(json.dumps({"event": "startup", "tier": svc.active_tier, "version": svc.version,
-                         "load_errors": svc.load_errors}))
+                         "fast_path": sorted(svc.fast), "load_errors": svc.load_errors}))
     svc.score(np.zeros((1, len(RAW_FEATURES))))    # warm-up so the first real request is not slow
     yield
 
@@ -157,15 +108,15 @@ def _score(records):
 def health():
     svc = app.state.svc
     tier = svc.active_tier
-    return {"status": "ok" if tier == "primary_lightgbm" else "degraded",
-            "active_tier": tier, "model_version": svc.version, "load_errors": svc.load_errors}
+    return {"status": "ok" if tier == "primary_lightgbm" else "degraded", "active_tier": tier,
+            "model_version": svc.version, "fast_path": sorted(svc.fast), "load_errors": svc.load_errors}
 
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(txn: Transaction):  # type: ignore
     t0 = time.perf_counter()
     preds = _score([txn])
-    return PredictResponse(predictions=preds, latency_ms=round((time.perf_counter() - t0) * 1000, 3)) 
+    return PredictResponse(predictions=preds, latency_ms=round((time.perf_counter() - t0) * 1000, 3))
 
 
 @app.post("/predict/batch", response_model=PredictResponse)

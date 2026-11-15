@@ -64,13 +64,40 @@ and place it at `data/raw/creditcard.csv` (not committed: 144 MB).
 Pre-trained artifacts are committed, so the API, batch CLI and tests run without retraining
 (`data/sample/unseen_transactions.csv` is produced by `train.py`; it is also committed).
 
-## Example request
-```powershell
-curl.exe -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" `
-  -d '{\"transaction_id\":\"t1\",\"Time\":160895,\"Amount\":127.14,\"V14\":-4.29,\"V17\":-8.71}'
+## Example requests
+Start the API, then from the repo root (works in PowerShell via `curl.exe`, and in bash/macOS via `curl`):
+```bash
+curl.exe -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d "@examples/sample_request.json"
 ```
-Missing V-fields are imputed (listed in `imputed_fields`); unknown fields, negative amounts and
-non-numeric values are rejected with HTTP 422.
+Response (a real fraud from the test window):
+```json
+{"predictions":[{"transaction_id":"demo_fraud_001","fraud_probability":0.997613,"is_fraud":true,
+  "decision":"BLOCK","threshold":0.254611,"served_by":"primary_lightgbm",
+  "model_version":"20261115153008","imputed_fields":[]}],"latency_ms":0.4}
+```
+Malformed input is rejected with HTTP 422, for example a negative amount:
+```json
+{"detail":"invalid payload","errors":[{"loc":"body.Amount","msg":"Input should be greater than or equal to 0"}]}
+```
+Missing V-fields are median-imputed and listed in `imputed_fields`; unknown fields, negative amounts and
+non-numeric values are rejected. Interactive docs: http://127.0.0.1:8000/docs
+
+Batch example:
+```bash
+python -m fraud.predict_batch --input data/sample/unseen_transactions.csv --output outputs/scored.csv
+```
+
+## Mapping to the recommended assignment structure
+| Recommended | This repo |
+|---|---|
+| `src/data_pipeline.py` | `src/fraud/data.py` (ingest, de-duplicate, temporal split) + `src/fraud/features.py` (leak-free preprocessing) |
+| `src/train.py` | `src/fraud/train.py` |
+| `src/evaluate.py` | `src/fraud/metrics.py` (PR-AUC, Recall@P, cost, confusion counts) + `scripts/make_figures.py` (PR curve, threshold curve) |
+| `serving/app.py` | `src/fraud/serving/app.py` (API) + `src/fraud/predict_batch.py` (batch CLI) |
+| `serving/schemas.py` | `src/fraud/serving/schemas.py` |
+| `benchmark.py` | `scripts/benchmark_api.py`, `scripts/benchmark_batch.py`, `scripts/profile_inference.py` |
+| `tests/` | `tests/test_system.py` (21 tests) |
+
 
 ## Fallback ladder
 LightGBM → logistic regression → V17 rule → training prior. Degraded tiers never auto-approve
