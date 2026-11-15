@@ -10,6 +10,8 @@ from fraud.features import make_preprocessor
 from fraud.serving.app import app
 
 SAMPLE = pd.read_csv(C.DATA_SAMPLE / "unseen_transactions.csv", nrows=50)
+needs_raw = pytest.mark.skipif(not C.DATA_RAW.exists(),
+                               reason="data/raw/creditcard.csv not downloaded (see README)")
 
 
 def payload(i=0, **override):
@@ -26,12 +28,15 @@ def client():
 
 
 # ------------------------------ 1. leakage safeguards ------------------------------
+
+
+@needs_raw
 def test_temporal_split_has_no_overlap():
     tr, va, te, _ = temporal_split(load_raw())
     assert tr.Time.max() < va.Time.min() and va.Time.max() < te.Time.min()
     assert set(tr.transaction_id).isdisjoint(te.transaction_id)
 
-
+@needs_raw
 def test_preprocessor_learns_from_train_only():
     tr, _, te, _ = temporal_split(load_raw())
     pre = make_preprocessor(scale=True).fit(tr[C.RAW_FEATURES])
